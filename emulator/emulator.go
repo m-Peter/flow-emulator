@@ -183,4 +183,6 @@ type Emulator interface {
 	ExecutionCapable
 	LogProvider
 	SourceMapCapable
+
+	ProfilingReport() *ProfilingReport
 }

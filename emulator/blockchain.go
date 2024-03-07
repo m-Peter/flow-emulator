@@ -95,6 +95,7 @@ func New(opts ...Option) (*Blockchain, error) {
 		clock:                  NewSystemClock(),
 		sourceFileMap:          make(map[common.Location]string),
 		entropyProvider:        &blockHashEntropyProvider{},
+		profilingReport:        &ProfilingReport{},
 	}
 	err := b.ReloadBlockchain()
 	if err != nil {
@@ -344,6 +345,7 @@ type Blockchain struct {
 	sourceFileMap map[common.Location]string
 
 	entropyProvider *blockHashEntropyProvider
+	profilingReport *ProfilingReport
 }
 
 // config is a set of configuration options for an emulated emulator.
@@ -1283,6 +1285,11 @@ func (b *Blockchain) executeNextTransaction(ctx fvm.Context) (*types.Transaction
 		sourceFile := pragmas.FilterByName(PragmaSourceFile).First().Argument()
 		b.sourceFileMap[location] = sourceFile
 	}
+	arguments := make([]string, 0)
+	for _, argument := range txnBody.Arguments {
+		arguments = append(arguments, string(argument))
+	}
+	b.profilingReport.AddTransaction(*tr, b.currentCode, arguments)
 
 	return tr, nil
 }
@@ -1501,7 +1508,7 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		b.sourceFileMap[location] = sourceFile
 	}
 
-	return &types.ScriptResult{
+	scriptResult := &types.ScriptResult{
 		ScriptID:        scriptID,
 		Value:           convertedValue,
 		Error:           scriptError,
@@ -1509,7 +1516,14 @@ func (b *Blockchain) executeScriptAtBlockID(script []byte, arguments [][]byte, i
 		Events:          events,
 		ComputationUsed: output.ComputationUsed,
 		MemoryEstimate:  output.MemoryEstimate,
-	}, nil
+	}
+	scriptArguments := make([]string, 0)
+	for _, argument := range arguments {
+		scriptArguments = append(scriptArguments, string(argument))
+	}
+	b.profilingReport.AddScript(*scriptResult, b.currentCode, scriptArguments)
+
+	return scriptResult, nil
 }
 
 func (b *Blockchain) ExecuteScriptAtBlockHeight(
@@ -1605,6 +1619,10 @@ func (b *Blockchain) EndDebugging() {
 
 func (b *Blockchain) CoverageReport() *runtime.CoverageReport {
 	return b.coverageReportedRuntime.CoverageReport
+}
+
+func (b *Blockchain) ProfilingReport() *ProfilingReport {
+	return b.profilingReport
 }
 
 func (b *Blockchain) ResetCoverageReport() {
