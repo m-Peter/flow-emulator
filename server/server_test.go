@@ -36,7 +36,7 @@ func TestNoPersistence(t *testing.T) {
 	os.RemoveAll(dbPath)
 	defer os.RemoveAll(dbPath)
 
-	conf := &Config{DBPath: dbPath}
+	conf := &Config{DBPath: dbPath, SetupEVMEnabled: true, SetupVMBridgeEnabled: true}
 	server := NewEmulatorServer(&logger, conf)
 	defer server.Stop()
 
@@ -53,7 +53,7 @@ func TestPersistenceWithPersistFlag(t *testing.T) {
 	os.RemoveAll(dbPath)
 	defer os.RemoveAll(dbPath)
 
-	conf := &Config{Persist: true, DBPath: dbPath}
+	conf := &Config{Persist: true, DBPath: dbPath, SetupEVMEnabled: true, SetupVMBridgeEnabled: true}
 	server := NewEmulatorServer(&logger, conf)
 	defer server.Stop()
 
@@ -70,7 +70,7 @@ func TestPersistenceWithSnapshotFlag(t *testing.T) {
 	os.RemoveAll(dbPath)
 	defer os.RemoveAll(dbPath)
 
-	conf := &Config{Snapshot: true, DBPath: dbPath}
+	conf := &Config{Snapshot: true, DBPath: dbPath, SetupEVMEnabled: true, SetupVMBridgeEnabled: true}
 	server := NewEmulatorServer(&logger, conf)
 	defer server.Stop()
 
@@ -82,7 +82,7 @@ func TestPersistenceWithSnapshotFlag(t *testing.T) {
 func TestExecuteScript(t *testing.T) {
 
 	logger := zerolog.Nop()
-	server := NewEmulatorServer(&logger, &Config{})
+	server := NewEmulatorServer(&logger, &Config{SetupEVMEnabled: true, SetupVMBridgeEnabled: true})
 	go server.Start()
 	defer server.Stop()
 
@@ -103,7 +103,9 @@ func TestExecuteScript(t *testing.T) {
 
 func TestExecuteScriptImportingContracts(t *testing.T) {
 	conf := &Config{
-		WithContracts: true,
+		WithContracts:        true,
+		SetupEVMEnabled:      true,
+		SetupVMBridgeEnabled: true,
 	}
 
 	logger := zerolog.Nop()
@@ -133,8 +135,10 @@ func TestExecuteScriptImportingContracts(t *testing.T) {
 func TestCustomChainID(t *testing.T) {
 
 	conf := &Config{
-		WithContracts: true,
-		ChainID:       "flow-sandboxnet",
+		WithContracts:        true,
+		ChainID:              "flow-sandboxnet",
+		SetupEVMEnabled:      true,
+		SetupVMBridgeEnabled: true,
 	}
 	logger := zerolog.Nop()
 	server := NewEmulatorServer(&logger, conf)
